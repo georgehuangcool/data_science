@@ -1,0 +1,48 @@
+> **Exercise 1:** Reproduce the density plot for the variable `pubs.2015` (5 minutes).
+
+```{r echo=TRUE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE}
+ggplot(data = my_data, aes(pubs.2015+1)) + 
+  geom_density(color = "white", fill = "blue", alpha = 0.4) +
+  scale_x_log10() +
+  ggtitle("Density plot of 2015 number of publications") +
+  xlab("Number of publications (log scale)")
+```
+
+
+
+
+> **Exercise 2**: Reproduce the density plot of the number of publications for each year (5 minutes).
+
+```{r echo=TRUE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE}
+my_data_pubs <- my_data %>%
+  select(ID, pubs.2011:pubs.2015) %>%  
+  pivot_longer(-ID, names_to = "year", values_to = "pubs")
+
+head(my_data_pubs)
+
+ggplot(data = my_data_pubs, aes(pubs, fill = year)) + 
+  geom_density(color = "white", position = "identity", alpha = 0.4) +
+  scale_x_log10() +
+  ggtitle("Density plot of number of publications (2011-2015)") +
+  xlab("Number of publications (log scale)")
+```
+
+
+
+
+> **Exercise 3**: Produce a chart that compares R&D investment and number of publications for Italian firms (10 minutes).
+
+```{r echo=TRUE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE}
+my_data_tidy %>%
+  filter(isocountrycode == "IT") %>%
+  ggplot(aes(x = rd, y = pubs+1)) + 
+  geom_point(aes(color = year, size = emp)) +
+  scale_size(range = c(0, 3)) +
+  geom_smooth() +
+  scale_x_log10() +
+  scale_y_log10() +
+  ggtitle("R&D investment and number of publications in the case of Italian firms (2011-2015)") +
+  xlab("R&D (log scale)") +
+  ylab("Number of publications") +
+  theme(legend.position = "bottom")
+```
