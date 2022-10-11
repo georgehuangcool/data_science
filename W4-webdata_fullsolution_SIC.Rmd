@@ -1,0 +1,140 @@
+---
+title: "Getting Data From the web"
+author: "Frédérique Bone"
+date: "08/02/2021"
+output: html_document
+---
+
+
+We are going to collect the data from the Sussex Innovation Center webpage to build a start-ups dataset. 
+This exercise will involve building up code from a few examples, in an iterative manner.  
+
+Let's first load the libraries that we need.
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(rvest)
+```
+
+
+Using read_html we are going to load the first page of the firm data 
+using html_nodes with are going all the containers where each of the firms are located which are contained into 'article'
+This will collect all articles where the firm data is contained in. 
+```{r}
+SIC_item <- read_html("https://www.sinc.co.uk/member-directory-list") %>%
+  html_nodes("article")
+```
+
+
+Create a variable to extract the name of the first firm blurb using double square brackets to access the first item in the list
+```{r}
+firm_blurb <- html_node(SIC_item[[1]], "p") %>% 
+  html_text
+
+print(firm_blurb)
+```
+
+Use the same code as before to extract (line 30-35) the 'firm_name' and the 'firm_location' (spin-out location)
+```{r}
+firm_name <- html_node(SIC_item[[1]], "h2") %>% 
+  html_text
+
+print(firm_name)
+
+firm_location <- html_node(SIC_item[[1]], "li") %>% 
+  html_text
+
+print(firm_location)
+
+```
+
+
+We are going to compile all of the variables into a one row dataframe
+(i) first by compiling the three variables created into a single vector
+(ii) second by transforming it into a dataframe (using the transpose function, as vector are by default added by columns)
+```{r}
+SIC_vec <- c(firm_name, firm_blurb, firm_location)
+SIC_vec <- data.frame(t(SIC_vec))
+colnames(SIC_vec) <- c("firm_name", "firm_blurb", "firm_location")
+
+SIC <- SIC_vec
+
+head(SIC, n=2)
+```
+
+
+Create a for loop to collect the rest of the data on the page from all previous blocks (using all)
+(i) Create a for loop for i taking value between 2 and length of SIC_item
+(ii) create a vector for each of the items
+(iii) transform the item to a dataframe with the right column names
+(iv) add the new dataframe to the SIC dataframe using bind_rows
+```{r}
+for (i in 2:length(SIC_item)){
+    
+  # Second tab copy
+  firm_blurb <- html_node(SIC_item[[i]], "p") %>% 
+    html_text
+  
+  # Third tab copy
+  firm_name <- html_node(SIC_item[[i]], "h2") %>% 
+    html_text
+  firm_location <- html_node(SIC_item[[i]], "li") %>% 
+    html_text
+  
+  # Fourth tab copy
+  SIC_vec <- c(firm_name, firm_blurb, firm_location)
+  SIC_vec <- data.frame(t(SIC_vec))
+  colnames(SIC_vec) <- c("firm_name", "firm_blurb", "firm_location")
+  
+  # bindrows 
+  SIC <- bind_rows(SIC, SIC_vec)
+
+}
+```
+
+
+For next time, using all the code above, try to create a for loop over the different pages on the website:
+(i) Create a for loop for i taking value between 1 and number of pages of the website (check first how many pages there are on the website)
+(ii) Get the data for each page by adjusting the html code and make it flexible to the row number (using "paste0(url, page)")
+(iii) create a vector for each of the items / dataframe for each items on the page
+(iv) add the new dataframe to the SIC dataframe using bindrows
+(v) view the dataframe created
+```{r}
+for (i in 1:14){
+  URL <- paste0("https://www.sinc.co.uk/member-directory-list?page=", i)
+  
+  SIC_item <- read_html(URL) %>%
+    html_nodes("article")
+  
+  for (j in 1:length(SIC_item)){
+    
+  # Second tab copy
+  firm_blurb <- html_node(SIC_item[[j]], "p") %>% 
+    html_text
+  
+  # Third tab copy
+  firm_name <- html_node(SIC_item[[j]], "h2") %>% 
+    html_text
+  firm_location <- html_node(SIC_item[[j]], "li") %>% 
+    html_text
+  
+  # Fourth tab copy
+  SIC_vec <- c(firm_name, firm_blurb, firm_location)
+  SIC_vec <- data.frame(t(SIC_vec))
+  colnames(SIC_vec) <- c("firm_name", "firm_blurb", "firm_location")
+  
+  # bindrows 
+  SIC <- bind_rows(SIC, SIC_vec)
+
+  }
+}
+
+
+```
+
+Save the dataset
+```{r}
+write_csv(SIC, "Sussex_innovation_center_firms.csv")
+```
+
+

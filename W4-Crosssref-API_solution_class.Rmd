@@ -1,0 +1,104 @@
+---
+title: "API_lecture"
+author: "Frédérique Bone"
+date: "29/01/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(httr)
+library(rvest)
+library(jsonlite)
+```
+
+## Get data from crossref
+
+We are going to explore cross_ref which available through an API
+
+Read documentation:
+https://api.crossref.org/swagger-ui/index.html#/Works/get_works
+
+Crossref has a specific R package to query the API, which we are going to use today to collect some data
+Try the code chunck below, but replacing
+(i) the query for the specific month and year assigned to you in class
+(ii) increase the limit of the number of paper returned to 400
+Running these queries take longer since we are waiting a response from a server
+(iii) Check the first 10 rows in the dataframe
+(iv) Add your email address to the polite and enter it at the end of query_full
+
+```{r}
+# Build the Crossref query with all the components
+api_first <- "http://api.crossref.org/works?query="
+query <- "artificial+neural+network"
+filter <- "&filter="
+funder<- "has-funder:true,"
+from_date <- "from-pub-date:2016-01-01,"
+to_date <- "until-pub-date:2016-01-31"
+limit <- "&rows=400"
+polite <- "&mailto=__"
+
+
+# Put the query together and call it
+query_full <- paste0(api_first, query,filter,funder, from_date,to_date, limit)
+fetch <- GET(query_full)
+
+# transform the call into a readable component
+return <- rawToChar(fetch$content)
+return_all <- jsonlite::fromJSON(return)
+ANN_data <- as.data.frame(return_all$message$items)
+
+head(ANN_data, n=10)
+```
+
+(i) Check names of the columns available
+```{r}
+names(ANN_data)
+```
+
+
+Create a new dataset from the crossref data collected to look at the top funders within those 400 first data point collected
+(1) keep only the columns '`container-title`' (using ` `around the names), 'DOI', 'title', 'funder'
+(2) Rename the DOI column to DOI_papers
+(3) separate funders for each funder taking only one row (using 'unnest' of the purr package in tidyr)
+(4) View the top 20 rows of the dataframe to see whether things have worked how you intended to
+
+```{r}
+
+
+ANN_funder <- ANN_data %>%
+  select(`container-title`, DOI, title, funder) %>%
+  rename(DOI_papers = DOI) %>%
+  unnest(funder)
+
+head(ANN_funder, n=20)
+
+```
+
+
+Clean the column names coming from the nested funder dataset:
+(1) on top of the columns to keep before, keep 'name' and 'DOI_paper'
+(2) rename 'name' to a more appropriate name (as this is specific to the funder)
+(3) rename 'DOI' to a more appropriate name (as this is specific to the funder)
+
+```{r}
+ANN_funder <- ANN_funder %>%
+  __ %>%
+  __ %>%
+  __
+```
+
+Create a summary of the funder data, to identify the top funder in your specific month
+The resulting dataframe will be arranged in descending order
+display the top three answers (these will be reported in class)
+```{r}
+Funder_summary <- ANN_funder %>%
+  __(__)%>%
+  __(count= __)%>%
+  ungroup()%>%
+  arrange(desc(count))
+
+__
+```
+
+
